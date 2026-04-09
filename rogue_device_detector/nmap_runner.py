@@ -9,11 +9,15 @@ from .baseline import normalize_mac
 from .models import PortInfo, ScanDevice
 
 
-DEFAULT_NMAP_ARGS = ["-sn", "-O", "-sV"]
+DEFAULT_NMAP_ARGS = ["-sV"]
 
 
 class NmapUnavailableError(RuntimeError):
     """Raised when Nmap is not installed or not on PATH."""
+
+
+def build_nmap_command(targets: str, extra_args: list[str] | None = None) -> list[str]:
+    return ["nmap", *DEFAULT_NMAP_ARGS, *(extra_args or []), "-oX", "-", targets]
 
 
 def run_nmap_scan(targets: str, extra_args: list[str] | None = None) -> list[ScanDevice]:
@@ -22,7 +26,7 @@ def run_nmap_scan(targets: str, extra_args: list[str] | None = None) -> list[Sca
             "Nmap is not installed or not available on PATH. Install it from https://nmap.org/."
         )
 
-    command = ["nmap", *DEFAULT_NMAP_ARGS, *(extra_args or []), "-oX", "-", targets]
+    command = build_nmap_command(targets, extra_args=extra_args)
     result = subprocess.run(
         command,
         capture_output=True,

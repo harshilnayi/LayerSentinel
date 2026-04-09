@@ -1,0 +1,2 @@
+# LayerSentinel currently has no extra runtime Python dependencies.
+# Install with: python -m pip install -e .

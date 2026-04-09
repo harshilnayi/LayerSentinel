@@ -1,10 +1,10 @@
 # LayerSentinel
 
-`LayerSentinel` is a Python project for investigating unauthorized devices on a local network. It uses Nmap for host discovery and service fingerprinting, compares scan results against an approved-device baseline, and produces investigation reports for unknown or suspicious hosts.
+`LayerSentinel` is a Python project for investigating unauthorized devices on a local network. It uses Nmap to scan a target range, extract service information, compare scan results against an approved-device baseline, and produce investigation reports for unknown or suspicious hosts.
 
 ## What It Does
 
-- Runs Nmap discovery scans against a target network range
+- Runs Nmap investigation scans against a target network range
 - Parses Nmap XML output without third-party wrappers
 - Tracks approved devices in a JSON baseline
 - Flags hosts as `known`, `unknown`, or `suspicious`
@@ -22,11 +22,10 @@
 ## Install
 
 ```powershell
-python -m pip install -r requirements.txt
 python -m pip install -e .
 ```
 
-`requirements.txt` installs the Python packages used by the project. The editable install registers the local app so the CLI commands work cleanly while you develop.
+The editable install registers the local app so the CLI commands work cleanly while you develop.
 
 Nmap must also be installed and available on `PATH` for live scans:
 
@@ -53,10 +52,16 @@ python -m rogue_device_detector.cli add-device --name "Printer" --ip "192.168.1.
 python -m rogue_device_detector.cli investigate --targets "192.168.1.0/24"
 ```
 
+If you want OS detection as part of a deeper scan, add it explicitly:
+
+```powershell
+python -m rogue_device_detector.cli investigate --targets "192.168.1.0/24" --extra-arg=-O
+```
+
 4. Or analyze an existing Nmap XML file:
 
 ```powershell
-python -m rogue_device_detector.cli investigate --xml-input ".\sample_scan.xml"
+python -m rogue_device_detector.cli investigate --xml-input ".\tests\fixtures\sample_nmap.xml"
 ```
 
 Reports are written to `reports/` by default.

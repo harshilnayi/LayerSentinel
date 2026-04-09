@@ -4,10 +4,11 @@ import unittest
 import uuid
 import shutil
 from pathlib import Path
+from unittest.mock import patch
 
 from rogue_device_detector.analyzer import analyze_devices
 from rogue_device_detector.baseline import add_device, load_baseline, save_baseline
-from rogue_device_detector.nmap_runner import parse_nmap_xml
+from rogue_device_detector.nmap_runner import build_nmap_command, parse_nmap_xml, run_nmap_scan
 from rogue_device_detector.reporter import list_reports, write_reports
 
 
@@ -66,6 +67,30 @@ class RogueDeviceDetectorTests(unittest.TestCase):
             self.assertEqual(list_reports(temp_dir)[0].name, json_path.name)
         finally:
             shutil.rmtree(temp_dir, ignore_errors=True)
+
+    def test_build_nmap_command_keeps_xml_stdout_and_extra_args(self) -> None:
+        command = build_nmap_command("192.168.1.0/24", extra_args=["-O", "-Pn"])
+
+        self.assertEqual(command[0], "nmap")
+        self.assertIn("-sV", command)
+        self.assertIn("-O", command)
+        self.assertIn("-Pn", command)
+        self.assertEqual(command[-3:], ["-oX", "-", "192.168.1.0/24"])
+
+    def test_run_nmap_scan_uses_built_command(self) -> None:
+        xml_text = FIXTURE.read_text(encoding="utf-8")
+
+        with patch("rogue_device_detector.nmap_runner.shutil.which", return_value="nmap"), patch(
+            "rogue_device_detector.nmap_runner.subprocess.run"
+        ) as mock_run:
+            mock_run.return_value.returncode = 0
+            mock_run.return_value.stdout = xml_text
+            mock_run.return_value.stderr = ""
+
+            devices = run_nmap_scan("10.0.0.0/24", extra_args=["-Pn"])
+
+        self.assertEqual(len(devices), 2)
+        self.assertEqual(mock_run.call_args.args[0], ["nmap", "-sV", "-Pn", "-oX", "-", "10.0.0.0/24"])
 
 
 if __name__ == "__main__":
